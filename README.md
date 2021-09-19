@@ -16,9 +16,7 @@ c) SubscriptionPlan
 d) Order
 
 
-1. Clone the project code using the command:
-      git clone 
-   Activate the env using env\Scripts\activate
+1. Clone the project code and Activate the env using env\Scripts\activate
 2. Navigate to subscribe folder
 3. Install the required libraries for the project with
 	pip install freeze -r requirements.txt

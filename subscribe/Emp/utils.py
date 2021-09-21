@@ -25,10 +25,7 @@ def send_mail(template_id, email, template_data):
     Sends mail
     """
     msg = EmailMessage(from_email=settings.DEFAULT_FROM_EMAIL, to=email)
-    print("hereeeeeee")
     msg.template_id = template_id
-    print("jere")
     msg.dynamic_template_data = template_data
-    print("hereeeeeeeee123")
     msg.send(fail_silently=False)
     print(msg)

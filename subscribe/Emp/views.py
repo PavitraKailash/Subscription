@@ -1,9 +1,8 @@
 from django.shortcuts import render
 from rest_framework import viewsets
-from .models import employee as Employee, loginUser as Login_User
+from .models import *
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.permissions import AllowAny
-
 from .serializers import *
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -18,39 +17,38 @@ import json
 
 
 class employeeViewset(APIView):
+    permission_classes = []
+
     def get(self, request):
         query = Employee.objects.all()
         serializer = EmployeeSerializer(query, many=True).data
         return Response(serializer, status=status.HTTP_200_OK)
 
     def post(self, request):
+        data = request.data
+        username = data['username']
+        f_name = data['first_name']
+        l_name = data['last_name']
+        email = data['email']
+        password = data['password']
+        phone = data['emp_phone']
+        hash_password = make_password(password)
         try:
-            data = request.data
-            data['user_id'] = gen_user_id(data["emp_first_name"], data["emp_last_name"])
-            data['emp_id'] = gen_emp_id(data["emp_first_name"])
-            data['emp_lastupdated'] = datetime.datetime.now()
-            data['is_user'] = False
-            Employee.objects.create(**data)
-
-            password = "User@123"
-            password_hash = make_password(password=password)
-            login_data = {
-                'user_id': data['user_id'],
-                'password': password_hash,
-                'username':  data['user_id']
-            }
-
-            Login_User.objects.create(**login_data)
-
-            template_data = {
-                "user_id": data['user_id']
-            }
-            send_mail(settings.VERIFY_EMAIL_TEMPLATE, [data["emp_email"]], template_data)
-
+            user_obj = {}
+            user_obj["username"] = username
+            user_obj["first_name"] = f_name
+            user_obj["last_name"] = l_name
+            user_obj["email"] = email
+            user_obj["password"] = hash_password
+            usr_save = User.objects.create(**user_obj)
+            cst_dt = {}
+            cst_dt["user_id"] = usr_save
+            cst_dt["emp_phone"] = phone
+            emp = Employee.objects.create(**cst_dt)
             return Response({"message": "User created successfully"}, status=status.HTTP_200_OK)
+
         except Exception as e:
-            res = {"code": "400", "message": "Error occured" + str(e)}
-            return Response(res, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"message": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class EmployeeSubscriptionPlansViews(APIView):
@@ -58,33 +56,6 @@ class EmployeeSubscriptionPlansViews(APIView):
         my_plans = SubscriptionPlan.objects.filter(user_id=user_id, is_active=True)
         serializers = SubscriptionPlansSerializer(my_plans).data
         return Response(serializers, status=status.HTTP_200_OK)
-
-
-class ResetPasswordView(APIView):
-    def post(self, request):
-        try:
-            query_serializer = EmployeeQuerySerializer()
-            user_id = request.query_params["user_id"]
-            input_data = request.data
-            if input_data["password"] == input_data["confirm_password"]:
-                login_user = Login_User.objects.get(user_id=user_id)
-                password_hash = make_password(password=input_data['password'])
-                login_user.password = password_hash
-                login_user.pwd_reset_date = datetime.datetime.now()
-                login_user.save()
-                emp_details = Employee.objects.get(user_id=user_id)
-                emp_details.is_user = True
-                emp_details.save()
-                return Response("password updated", status=status.HTTP_200_OK)
-            else:
-                return Response("Do no match", status=status.HTTP_200_OK)
-        except Exception as e:
-            res = {"code": "400", "message": "Error occured" + str(e)}
-            return Response(res, status=status.HTTP_400_BAD_REQUEST)
-
-
-class UserTokenAndPermissionView(TokenObtainPairView):
-    serializer_class = UserTokenAndPermissionSeriailizer
 
 
 class SubscriptionPlanView(APIView):
@@ -106,6 +77,7 @@ class SubscriptionPlanView(APIView):
 
 
 class StartPaymentAPI(APIView):
+    permission_classes = []
     def post(self, request, sbp):
         sbs_plan = SubscriptionPlan.objects.get(pk=sbp)
 
@@ -135,6 +107,7 @@ class StartPaymentAPI(APIView):
 
 
 class HandlePaymentAPI(APIView):
+    permission_classes = []
     def post(self, request, template='payment_successful.html'):
         # request.data is coming from frontend
         response = request.POST

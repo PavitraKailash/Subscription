@@ -1,4 +1,4 @@
-from .models import employee as Employee, loginUser as Login_User, SubscriptionPlan, Order
+from .models import *
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
@@ -12,29 +12,6 @@ class EmployeeSerializer(serializers.ModelSerializer):
 
 class EmployeeQuerySerializer(serializers.Serializer):
     user_id = serializers.CharField()
-
-
-class LoginUserSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Login_User
-        fields = [
-            "id",
-            "user_id",
-        ]
-
-
-class UserTokenAndPermissionSeriailizer(TokenObtainPairSerializer):
-    def get_token(self, attrs):
-        print("hereeeeeeeeee")
-        token = super(UserTokenAndPermissionSeriailizer, self).validate(attrs)
-        print(self.user.user_id)
-        loggedin_user_id = self.user.user_id
-        print(loggedin_user_id)
-        token.validated_data['username'] = self.user.user_id
-        print(token['username'])
-        chk_active = Employee.objects.get(user_id=token['username'], is_user=True)
-        if chk_active:
-            return token
 
 
 class SubscriptionPlansSerializer(serializers.ModelSerializer):

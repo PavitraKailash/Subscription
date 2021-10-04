@@ -1,40 +1,13 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.utils.translation import gettext_lazy as _
-
+from django.contrib.auth.models import User
 
 
 # Create your models here.
-class employee(models.Model):
-    user_id = models.CharField(primary_key=True, max_length=15)
-    emp_first_name = models.CharField(max_length=30)
-    emp_last_name = models.CharField(max_length=30)
-    emp_id = models.CharField(max_length=15, null=True, db_index=True)
-    emp_email = models.CharField(unique=True, max_length=250, null=True, db_index=True)
-    emp_phone = models.CharField(unique=True, max_length=15, null=True, db_index=True)
-    emp_lastupdated = models.DateTimeField(auto_now=True)
-    emp_lastupdatedby = models.CharField(max_length=15, null=True)
-    is_user = models.BooleanField(null=True, default=False)
-
-    def __str__(self):
-        return self.emp_first_name + " " + self.emp_last_name
-
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=["emp_email", "emp_phone"], name="unique_email_phone"
-            )
-        ]
-
-
-class loginUser(AbstractUser):
-    password = models.CharField(max_length=100, null=True)
-    pwd_reset_date = models.DateTimeField(null=True)
-    last_login = models.DateTimeField(null=True)
-    user_id = models.CharField(max_length=15, null=True)
-
-    class Meta:
-        db_table = "login_user"
+class Employee(models.Model):
+    user_id = models.OneToOneField(User, on_delete=models.CASCADE)
+    emp_phone = models.IntegerField(null=True)
 
 
 class SubscriptionPlan(models.Model):
@@ -51,8 +24,7 @@ class SubscriptionPlan(models.Model):
     is_paid = models.BooleanField(null=True)
     order_id = models.ForeignKey('Order', on_delete=models.CASCADE, null=True)
     plan_rate = models.IntegerField()
-    user_id = models.ForeignKey(employee, on_delete=models.CASCADE, null=True)
-
+    user_id = models.ForeignKey(Employee, on_delete=models.CASCADE, null=True)
 
     class Meta:
         db_table = "subscription_plan"
@@ -71,5 +43,3 @@ class Order(models.Model):
 
     def __str__(self):
         return self.order_product
-
-
